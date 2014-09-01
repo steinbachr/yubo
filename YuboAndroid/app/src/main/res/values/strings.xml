@@ -1,8 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">Yubo</string>
-    <string name="hello_world">Hello world!</string>
+    <!-- App Strings -->
+    <string name="app_name">YuBo</string>
     <string name="action_settings">Settings</string>
 
+    <!-- Titles -->
+    <string name="title_activity_tutorial">YuBo</string>
+    <string name="title_fragment_friends">Friends</string>
+    <string name="title_activity_home">HomeActivity</string>
+    <string name="title_fragment_allowed_contacts">Who Can See Me</string>
+
+    <!-- Label Text -->
+    <string name="lbl_step1_title">Step 1: Choose who can see your location</string>
+    <string name="lbl_step2_title">Step 2: Choose whose location you want to see</string>
+
+    <!-- Buttons -->
+    <string name="btn_tutorial_choose_friends">Choose Friends</string>
+    <string name="btn_tutorial_finished">Finished!</string>
+    <string name="btn_add_friend">+</string>
 </resources>

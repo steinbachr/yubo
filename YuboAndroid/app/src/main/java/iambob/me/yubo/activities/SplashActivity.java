@@ -1,17 +1,19 @@
-package iambob.me.yubo;
+package iambob.me.yubo.activities;
 
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import iambob.me.yubo.R;
 
-public class IntroActivity extends Activity {
+
+public class SplashActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_intro);
+        setContentView(R.layout.activity_splash);
     }
 
 
