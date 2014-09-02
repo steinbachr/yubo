@@ -7,6 +7,7 @@ import android.content.Loader;
 import android.support.v4.app.FragmentActivity;
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.app.DialogFragment;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Button;
@@ -32,10 +33,10 @@ import java.util.HashMap;
 
 
 public class HomeActivity extends FragmentActivity {
-    static final String MODIFY_FRIENDS_FRAGMENT_FOR_KEY = "modify_friends_for";
-
     static ArrayList<Contact> myFriends;
     static ArrayList<Contact> contactsWithPermission;
+    static AllowedFriendsFragment allowedFriendsFragment;
+    static MyFriendsFragment myFriendsFragment;
     static ModifyFriendsFragment modifyFriendsFragment;
     static Database db;
 
@@ -50,6 +51,9 @@ public class HomeActivity extends FragmentActivity {
         db = new Database(this);
         myFriends = db.getFollowedContacts();
         contactsWithPermission = db.getContactsWithPermission();
+
+        allowedFriendsFragment = AllowedFriendsFragment.newInstance();
+        myFriendsFragment = MyFriendsFragment.newInstance();
 
         mSectionsPagerAdapter = new SectionsPagerAdapter(getFragmentManager());
         mViewPager = (ViewPager) findViewById(R.id.pager);
@@ -108,22 +112,21 @@ public class HomeActivity extends FragmentActivity {
 
 
     /*****-----< Button Actions >-----*****/
-    public void doneModifyingFriends(View v) {
-        getFragmentManager().beginTransaction().hide(modifyFriendsFragment).commit();
-    }
-
     /**
      * a helper for the two below button actions.
      * @param whichFragment can be one of FOR_MY_FRIENDS or FOR_ALLOWED_FRIENDS. Affects how the modifyFriendsFragment
      *                      is initialized
      */
     private void clickModifyFriendsHelper(int whichFragment) {
-        modifyFriendsFragment = new ModifyFriendsFragment();
-        Bundle bundle = new Bundle();
-        bundle.putInt(MODIFY_FRIENDS_FRAGMENT_FOR_KEY, whichFragment);
-        modifyFriendsFragment.setArguments(bundle);
+        FragmentTransaction ft = getFragmentManager().beginTransaction();
+        Fragment prev = getFragmentManager().findFragmentByTag(ModifyFriendsFragment.FRAGMENT_TAG);
+        if (prev != null) {
+            ft.remove(prev);
+        }
+        ft.addToBackStack(null);
 
-        getFragmentManager().beginTransaction().add(modifyFriendsFragment, null).show(modifyFriendsFragment).commit();
+        modifyFriendsFragment = ModifyFriendsFragment.newInstance(whichFragment);
+        modifyFriendsFragment.show(ft, ModifyFriendsFragment.FRAGMENT_TAG);
     }
 
     public void clickModifyMyFriends(View v) {
@@ -147,9 +150,9 @@ public class HomeActivity extends FragmentActivity {
         public Fragment getItem(int position) {
             switch (position) {
                 case 0:
-                    return MyFriendsFragment.newInstance();
+                    return myFriendsFragment;
                 case 1:
-                    return AllowedFriendsFragment.newInstance();
+                    return allowedFriendsFragment;
             }
             return null;
         }
@@ -165,6 +168,8 @@ public class HomeActivity extends FragmentActivity {
 
 
     public static class MyFriendsFragment extends Fragment {
+        MyFriendsAdapter adapter;
+
         public static MyFriendsFragment newInstance() {
             MyFriendsFragment fragment = new MyFriendsFragment();
             return fragment;
@@ -179,14 +184,21 @@ public class HomeActivity extends FragmentActivity {
             View rootView = inflater.inflate(R.layout.fragment_my_friends, container, false);
 
             ListView myFriendsLv = (ListView)rootView.findViewById(R.id.myFriendsLv);
-            myFriendsLv.setAdapter(new MyFriendsAdapter(getActivity(), R.layout.list_item_my_friend, myFriends, db));
+            adapter = new MyFriendsAdapter(getActivity(), R.layout.list_item_my_friend, myFriends, db);
+            myFriendsLv.setAdapter(adapter);
 
             return rootView;
+        }
+
+        public void updateAdapterFromDb() {
+            this.adapter.updateAdapterFromDb();
         }
     }
 
 
     public static class AllowedFriendsFragment extends Fragment {
+        AllowedFriendsAdapter adapter;
+
         public static AllowedFriendsFragment newInstance() {
             AllowedFriendsFragment fragment = new AllowedFriendsFragment();
             return fragment;
@@ -201,24 +213,41 @@ public class HomeActivity extends FragmentActivity {
             View rootView = inflater.inflate(R.layout.fragment_allowed_friends, container, false);
 
             ListView allowedFriendsLv = (ListView)rootView.findViewById(R.id.allowedFriendsLv);
-            allowedFriendsLv.setAdapter(new AllowedFriendsAdapter(getActivity(), R.layout.list_item_allowed_friend, contactsWithPermission, db));
+            adapter = new AllowedFriendsAdapter(getActivity(), R.layout.list_item_allowed_friend, contactsWithPermission, db);
+            allowedFriendsLv.setAdapter(adapter);
 
             return rootView;
+        }
+
+        public void updateAdapterFromDb() {
+            this.adapter.updateAdapterFromDb();
         }
     }
 
 
-    public static class ModifyFriendsFragment extends Fragment {
+    public static class ModifyFriendsFragment extends DialogFragment {
+        static final String FRAGMENT_TAG = "dialog";
+        static final String MODIFY_FRIENDS_FRAGMENT_FOR_KEY = "modify_friends_for";
         static final int FOR_ALLOWED_FRIENDS = 1;
         static final int FOR_MY_FRIENDS = 2;
 
+        static ModifyFriendsFragment newInstance(int modifyFor) {
+            ModifyFriendsFragment f = new ModifyFriendsFragment();
+
+            // Supply num input as an argument.
+            Bundle args = new Bundle();
+            args.putInt(MODIFY_FRIENDS_FRAGMENT_FOR_KEY, modifyFor);
+            f.setArguments(args);
+
+            return f;
+        }
         public ModifyFriendsFragment() {}
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
             Bundle bundle = getArguments();
-            int modifyFor = bundle.getInt(MODIFY_FRIENDS_FRAGMENT_FOR_KEY);
+            final int modifyFor = bundle.getInt(MODIFY_FRIENDS_FRAGMENT_FOR_KEY);
 
             View rootView = inflater.inflate(R.layout.fragment_modify_friends, container, false);
 
@@ -233,6 +262,19 @@ public class HomeActivity extends FragmentActivity {
 
             ListView contactLv = (ListView) rootView.findViewById(R.id.modifyFriendsLv);
             contactLv.setAdapter(contactsAdapter);
+
+            rootView.findViewById(R.id.modifyMyFriendsBtn).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (modifyFor == FOR_ALLOWED_FRIENDS) {
+                        allowedFriendsFragment.updateAdapterFromDb();
+                    } else {
+                        myFriendsFragment.updateAdapterFromDb();
+                    }
+                    modifyFriendsFragment.dismiss();
+                }
+            });
+
             return rootView;
         }
     }

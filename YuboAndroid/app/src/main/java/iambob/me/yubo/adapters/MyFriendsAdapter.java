@@ -21,11 +21,8 @@ import iambob.me.yubo.R;
 
 
 public class MyFriendsAdapter extends ContactsArrayAdapter<Contact> {
-    Database db;
-
-    public MyFriendsAdapter (Context context, int resourceId, ArrayList<Contact> contacts, Database db) {
-        super(context, resourceId, contacts);
-        this.db = db;
+    public MyFriendsAdapter(Context context, int resourceId, ArrayList<Contact> contacts, Database db) {
+        super(context, resourceId, contacts, db);
     }
 
     public View getView(int position, View convertView, ViewGroup parent) {
@@ -57,10 +54,16 @@ public class MyFriendsAdapter extends ContactsArrayAdapter<Contact> {
         Button friendLocationBtn, removeFriendBtn;
     }
 
+    /**-- ContactsArrayAdapter Overrides --**/
     @Override
     public void onContactRemoved(Contact removed) {
         removed.setWantsLocationOf(false);
         db.updateContact(removed);
+    }
+
+    @Override
+    protected ArrayList<Contact> contactsForAdapter() {
+        return this.db.getFollowedContacts();
     }
 
     /**-- Listeners --**/

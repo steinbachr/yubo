@@ -21,11 +21,8 @@ import iambob.me.yubo.R;
 
 
 public class AllowedFriendsAdapter extends ContactsArrayAdapter<Contact> {
-    Database db;
-
     public AllowedFriendsAdapter(Context context, int resourceId, ArrayList<Contact> contacts, Database db) {
-        super(context, resourceId, contacts);
-        this.db = db;
+        super(context, resourceId, contacts, db);
     }
 
     public View getView(int position, View convertView, ViewGroup parent) {
@@ -54,9 +51,15 @@ public class AllowedFriendsAdapter extends ContactsArrayAdapter<Contact> {
         Button removeFriendBtn;
     }
 
+    /**-- ContactsArrayAdapter Overrides --**/
     @Override
     public void onContactRemoved(Contact removed) {
         removed.setAllowsLocationTo(false);
         db.updateContact(removed);
+    }
+
+    @Override
+    protected  ArrayList<Contact> contactsForAdapter() {
+        return this.db.getContactsWithPermission();
     }
 }

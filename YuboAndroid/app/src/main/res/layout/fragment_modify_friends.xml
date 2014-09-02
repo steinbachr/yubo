@@ -20,6 +20,5 @@
         android:text="@string/btn_choose_friends_finished"
         android:id="@+id/modifyMyFriendsBtn"
         android:layout_gravity="center_horizontal"
-        android:layout_weight="1"
-        android:onClick="doneModifyingFriends"/>
+        android:layout_weight="1"/>
 </LinearLayout>
