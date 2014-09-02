@@ -75,4 +75,15 @@ public class Contact {
     public String toString() {
         return this.getName();
     }
+
+    /**-- Public Methods --**/
+    public boolean toggleWantsLocationOf() {
+        this.wantsLocationOf = !this.wantsLocationOf;
+        return this.wantsLocationOf;
+    }
+
+    public boolean toggleAllowsLocationTo() {
+        this.allowsLocationTo = !this.allowsLocationTo;
+        return this.allowsLocationTo;
+    }
 }

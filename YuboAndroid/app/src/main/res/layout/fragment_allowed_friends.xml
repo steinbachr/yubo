@@ -15,8 +15,9 @@
         android:layout_height="0dp"
         android:textSize="30sp"
         android:text="@string/btn_add_friend"
-        android:id="@+id/addAllowedFriendBtn"
+        android:id="@+id/modifyAllowedFriendsBtn"
         android:background="@color/blue"
         android:textColor="@color/white"
+        android:onClick="clickModifyAllowedFriends"
         android:layout_weight="1" />
 </LinearLayout>

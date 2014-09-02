@@ -1,6 +1,5 @@
 package iambob.me.yubo.activities;
 
-import android.app.Activity;
 import android.app.FragmentManager;
 import android.app.Fragment;
 import android.content.Intent;
@@ -14,20 +13,23 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import iambob.me.yubo.R;
-import iambob.me.yubo.activities.WaitForContactsActivity;
 import iambob.me.yubo.models.Contact;
 import iambob.me.yubo.utils.ContactsUtils;
+import iambob.me.yubo.adapters.ChooseFriendsAdapter;
+import iambob.me.yubo.database.Database;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
 public class TutorialActivity extends WaitForContactsActivity {
     static final String STEP_NUMBER_KEY = "step";
+    static ArrayList<Contact> loadedContacts;
+    static Database db;
 
     TutorialStepFragment step1Fragment;
     TutorialStepFragment step2Fragment;
     FragmentManager fragManager;
-    static ArrayList<Contact> loadedContacts;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +39,7 @@ public class TutorialActivity extends WaitForContactsActivity {
         if (savedInstanceState == null) {
             new ContactsUtils(this).getContacts();
             loadedContacts = new ArrayList<Contact>();
+            db = new Database(this);
 
             Bundle fragArgs = new Bundle();
             fragArgs.putInt(STEP_NUMBER_KEY, 1);
@@ -89,6 +92,8 @@ public class TutorialActivity extends WaitForContactsActivity {
     /*****----- FRAGMENTS -----*****/
 
     public static class TutorialStepFragment extends Fragment {
+        static final int ALLOW_LOCATION_TO_STEP = 1;
+        static final int WANT_LOCATION_FROM_STEP = 2;
         ArrayAdapter<Contact> contactsAdapter;
 
         public TutorialStepFragment() {}
@@ -103,11 +108,11 @@ public class TutorialActivity extends WaitForContactsActivity {
         private HashMap<String, Integer> layoutsForStep(int forStep) {
             HashMap<String, Integer> layoutsMap = new HashMap<String, Integer>();
             switch (forStep) {
-                case 1:
+                case ALLOW_LOCATION_TO_STEP:
                     layoutsMap.put("root", R.layout.fragment_step1);
                     layoutsMap.put("list", R.id.allowLocationToContacts);
                     break;
-                case 2:
+                case WANT_LOCATION_FROM_STEP:
                     layoutsMap.put("root", R.layout.fragment_step2);
                     layoutsMap.put("list", R.id.wantLocationFromContacts);
                     break;
@@ -126,7 +131,9 @@ public class TutorialActivity extends WaitForContactsActivity {
 
             HashMap<String, Integer> layoutMap = this.layoutsForStep(step);
             View rootView = inflater.inflate(layoutMap.get("root"), container, false);
-            contactsAdapter = new ArrayAdapter<Contact>(getActivity(), android.R.layout.simple_list_item_1, loadedContacts);
+
+            String adapterFor = step == ALLOW_LOCATION_TO_STEP ? ChooseFriendsAdapter.ADAPTER_FOR_FRIEND_PERMISSIONS : ChooseFriendsAdapter.ADAPTER_FOR_MY_FRIENDS;
+            contactsAdapter = new ChooseFriendsAdapter(getActivity(), R.layout.list_item_choose_friend, loadedContacts, adapterFor, db);
 
             ListView allowedToViewLocationLv = (ListView)rootView.findViewById(layoutMap.get("list"));
             allowedToViewLocationLv.setAdapter(contactsAdapter);

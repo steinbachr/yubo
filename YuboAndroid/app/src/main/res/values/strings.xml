@@ -18,5 +18,10 @@
     <!-- Buttons -->
     <string name="btn_tutorial_choose_friends">Choose Friends</string>
     <string name="btn_tutorial_finished">Finished!</string>
+    <string name="btn_choose_friends_finished">Done</string>
     <string name="btn_add_friend">+</string>
+    <string name="btn_remove_friend">-</string>
+    <string name="btn_get_friends_location">Get Location</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
 </resources>

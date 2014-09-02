@@ -25,11 +25,12 @@ public class Database {
 
     /**-- Helpers --**/
     /**
-     * get all contacts from the Database as a hashmap where the key is the contact id and the value
-     * the contact itself
-     * @return HashMap of contactId -> Contact
+     * gets all contacts from the database filtered by the provided selection
+     * @param selection the WHERE clause
+     * @param selectionArgs the values for the WHERE clause variables
+     * @return a filtered HashMap of contactId -> Contact from the db
      */
-    private HashMap<String, Contact> getDbContacts() {
+    private HashMap<String, Contact> getDbContacts(String selection, String[] selectionArgs) {
         HashMap<String, Contact> result = new HashMap<String, Contact>();
 
         SQLiteDatabase db = this.databaseHelper.getReadableDatabase();
@@ -38,7 +39,7 @@ public class Database {
                 DatabaseEntry.COLUMN_NAME_ALLOWED_LOCATION, DatabaseEntry.COLUMN_NAME_WANTS_LOCATION,
                 DatabaseEntry.COLUMN_NAME_NAME, DatabaseEntry.COLUMN_NAME_NUMBER
         };
-        Cursor c = db.query(DatabaseEntry.TABLE_NAME, projection, null, null, null, null, null);
+        Cursor c = db.query(DatabaseEntry.TABLE_NAME, projection, selection, selectionArgs, null, null, null);
 
         int idIndex = c.getColumnIndex(DatabaseEntry.COLUMN_NAME_CONTACT_ID);
         int wantsLocationOfIndex = c.getColumnIndex(DatabaseEntry.COLUMN_NAME_WANTS_LOCATION);
@@ -55,6 +56,15 @@ public class Database {
         }
 
         return result;
+    }
+
+    /**
+     * get all contacts from the Database as a hashmap where the key is the contact id and the value
+     * the contact itself
+     * @return HashMap of contactId -> Contact
+     */
+    private HashMap<String, Contact> getDbContacts() {
+        return getDbContacts(null, null);
     }
 
     /**
@@ -75,8 +85,8 @@ public class Database {
      */
     private void updateContactInDb(Contact contact, ContentValues updateVals) {
         SQLiteDatabase db = this.databaseHelper.getReadableDatabase();
-        String selection = DatabaseEntry.COLUMN_NAME_NAME + " LIKE ?";
-        String[] selectionArgs = { contact.getName() };
+        String selection = DatabaseEntry.COLUMN_NAME_CONTACT_ID + " = ?";
+        String[] selectionArgs = { contact.getContactId() };
         new UpdateTask(db, updateVals, selection, selectionArgs).execute();
     }
 
@@ -137,40 +147,6 @@ public class Database {
     }
 
     /**
-     * get the Contact from the Database having the given name, or null if none found
-     * @param name the name of the contact to get from the database
-     * @return the Contact if found, null otherwise
-     */
-    public Contact getContactByName(String name) {
-        HashMap<String, Contact> dbContacts = getDbContacts();
-
-        for (HashMap.Entry<String, Contact> contact : dbContacts.entrySet()) {
-            if (contact.getValue().getName().equalsIgnoreCase(name)) {
-                return contact.getValue();
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * get the Contact from the Database having the given number, or null if none found
-     * @param number the number of the contact to get from the database
-     * @return the Contact if found, null otherwise
-     */
-    public Contact getContactByNumber(String number) {
-        HashMap<String, Contact> dbContacts = getDbContacts();
-
-        for (HashMap.Entry<String, Contact> contact : dbContacts.entrySet()) {
-            if (contact.getValue().getNumber().equals(number)) {
-                return contact.getValue();
-            }
-        }
-
-        return null;
-    }
-
-    /**
      * get all contacts from the database as an array of contacts
      * @return all contacts from the db
      */
@@ -179,43 +155,44 @@ public class Database {
     }
 
     /**
-     * set the wantsLocationOf to true for the given contact
-     * @param contact the contact whose location we want to follow
+     * get all the contacts that the user wants to have easy access to location for
+     * @return contacts user wants to view location of
      */
-    public void followContact(Contact contact) {
-        ContentValues values = new ContentValues();
-        values.put(DatabaseEntry.COLUMN_NAME_WANTS_LOCATION, 1);
-        this.updateContactInDb(contact, values);
+    public ArrayList<Contact> getFollowedContacts() {
+        ArrayList<Contact> allContacts = getAllContacts();
+        ArrayList<Contact> filtered = new ArrayList<Contact>();
+        for (Contact contact : allContacts) {
+            if (contact.isWantsLocationOf()) {
+                filtered.add(contact);
+            }
+        }
+        return filtered;
     }
 
     /**
-     * unset the wantsLocationOf to true for the given contact
-     * @param contact the contact whose location we want to unfollow
+     * get all contacts that the user has authorized to view their permission
+     * @return contacts with permission
      */
-    public void unfollowContact(Contact contact) {
-        ContentValues values = new ContentValues();
-        values.put(DatabaseEntry.COLUMN_NAME_WANTS_LOCATION, 0);
-        this.updateContactInDb(contact, values);
+    public ArrayList<Contact> getContactsWithPermission() {
+        ArrayList<Contact> allContacts = getAllContacts();
+        ArrayList<Contact> filtered = new ArrayList<Contact>();
+        for (Contact contact : allContacts) {
+            if (contact.isAllowsLocationTo()) {
+                filtered.add(contact);
+            }
+        }
+        return filtered;
     }
 
     /**
-     * set the allowsLocationTo to true for the given contact
-     * @param contact the contact whose location we want to unfollow
+     * update the (runtime mutable) fields of a contact in the db
+     * @param contact the contact to update in the database
      */
-    public void giveContactPermission(Contact contact) {
-        ContentValues values = new ContentValues();
-        values.put(DatabaseEntry.COLUMN_NAME_ALLOWED_LOCATION, 0);
-        this.updateContactInDb(contact, values);
-    }
-
-    /**
-     * unset the allowsLocationTo to for the given contact
-     * @param contact the contact whose permission to view this Users location has been revoked
-     */
-    public void revokeContactPermission(Contact contact) {
-        ContentValues values = new ContentValues();
-        values.put(DatabaseEntry.COLUMN_NAME_ALLOWED_LOCATION, 0);
-        this.updateContactInDb(contact, values);
+    public void updateContact(Contact contact) {
+        ContentValues cv = new ContentValues();
+        cv.put(DatabaseEntry.COLUMN_NAME_ALLOWED_LOCATION, contact.isAllowsLocationTo());
+        cv.put(DatabaseEntry.COLUMN_NAME_WANTS_LOCATION, contact.isWantsLocationOf());
+        this.updateContactInDb(contact, cv);
     }
 
     /**
